@@ -5,6 +5,10 @@ import os
 
 # For local Dockerfile:
 # "postgresql+psycopg://kubsu:kubsu@host.docker.internal:5432/kubsu"
+
+# For local use:
+# "postgresql+psycopg://kubsu:kubsu@127.0.0.1:5432/kubsu"
+
 DATABASE_URL = os.getenv(
     "DATABASE_URL", 
     "postgresql+psycopg://kubsu:kubsu@127.0.0.1:5432/kubsu"
