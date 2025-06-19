@@ -1,15 +1,77 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from src import models, schemas
 from src.database import init_db, get_db
 
-app = FastAPI()
+
+INDEX_HTML = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>KUBSU User API</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }
+        h1 { color: #2c3e50; }
+        a { color: #3498db; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        .endpoint { background: #f5f5f5; padding: 10px; border-radius: 5px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>Welcome to KUBSU User API!</h1>
+    <p>Available endpoints:</p>
+
+    <div class="endpoint">
+        <strong>GET /users/</strong> - Get list of users<br>
+        Example: <a href="/users/" target="_blank">/users/</a>
+    </div>
+
+    <div class="endpoint">
+        <strong>POST /users/</strong> - Create new user<br>
+        Use Swagger for testing: <a href="/docs" target="_blank">/docs</a>
+    </div>
+
+    <div class="endpoint">
+        <strong>GET /users/{id}</strong> - Get user by ID<br>
+        Example: <a href="/users/1" target="_blank">/users/1</a>
+    </div>
+
+    <p>For full API interface visit <a href="/docs" target="_blank">Swagger UI</a> or <a href="/redoc" target="_blank">ReDoc</a>.</p>
+</body>
+</html>
+"""
 
 
-@app.on_event("startup")
-async def startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("Starting KubSU API v2.0 - Changes detected!")
     await init_db()
+    yield
+
+
+app = FastAPI(
+    title="KubSU API",
+    description="CRUD API for user management",
+    version="2.0.0",
+    lifespan=lifespan
+)
+
+
+@app.get("/health")
+async def health_check():
+    return {
+        "status": "healthy", 
+        "service": "kubsu-api",
+        "version": "2.0.0",
+        "message": "All systems operational!"
+    }
+
+
+@app.get("/", response_class=HTMLResponse)
+async def read_root():
+    return HTMLResponse(content=INDEX_HTML, status_code=200)
 
 
 @app.post("/users/", response_model=schemas.User)
