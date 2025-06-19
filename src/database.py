@@ -7,7 +7,6 @@ DATABASE_URL = os.getenv(
     "postgresql+psycopg://kubsu:kubsu@127.0.0.1:5432/kubsu"
 )
 engine = create_async_engine(DATABASE_URL, echo=True)
-
 AsyncSessionLocal = sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
 Base = declarative_base()
 

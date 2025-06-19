@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Response, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -70,9 +70,14 @@ async def health_check():
     }
 
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/", response_class=HTMLResponse, include_in_schema=False)
 async def read_root():
     return HTMLResponse(content=INDEX_HTML, status_code=200)
+
+
+@app.get('/favicon.ico', include_in_schema=False)
+async def favicon():
+    return Response(status_code=204)
 
 
 @app.post("/users/", response_model=schemas.User)
