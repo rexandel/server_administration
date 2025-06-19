@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from src import models, schemas
@@ -10,7 +11,7 @@ INDEX_HTML = """
 <!DOCTYPE html>
 <html>
 <head>
-    <title>KUBSU User API</title>
+    <title>KubSU API</title>
     <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }
         h1 { color: #2c3e50; }
@@ -46,15 +47,15 @@ INDEX_HTML = """
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("Starting KubSU API v2.0 - Changes detected!")
+    print("Starting KubSU API")
     await init_db()
     yield
 
 
 app = FastAPI(
     title="KubSU API",
-    description="CRUD API for user management",
-    version="2.0.0",
+    description="KubSU API For User Management",
+    version="1.0.0",
     lifespan=lifespan
 )
 
@@ -64,7 +65,7 @@ async def health_check():
     return {
         "status": "healthy", 
         "service": "kubsu-api",
-        "version": "2.0.0",
+        "version": "1.0.0",
         "message": "All systems operational!"
     }
 
