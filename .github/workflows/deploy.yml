@@ -71,7 +71,7 @@ jobs:
     needs: build
     runs-on: self-hosted
     steps:
-      - name: Deploy to Server
+      - name: Prepare Environment
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.DEPLOY_HOST }}
@@ -79,10 +79,24 @@ jobs:
           key: ${{ secrets.DEPLOY_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
           script: |
+            # Clean up disk space first
+            echo "=== Cleaning up disk space ==="
+            podman system prune -a -f || true
+            sudo rm -rf /var/lib/containers/tmp/* || true
+            df -h
+
+            # Create directory in user's home folder to avoid sudo
             echo "Creating postgres data directory..."
-            sudo mkdir -p /var/lib/kubsu/postgres_data
-            sudo chown -R $(whoami):$(whoami) /var/lib/kubsu
-            
+            mkdir -p ~/kubsu/postgres_data
+
+      - name: Deploy Application
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          port: ${{ secrets.SSH_PORT || 22 }}
+          script: |
             echo "Starting PostgreSQL container..."
             podman stop kubsu-postgres || true
             podman rm kubsu-postgres || true
@@ -91,7 +105,7 @@ jobs:
               -e POSTGRES_USER=kubsu \
               -e POSTGRES_PASSWORD=kubsu \
               -e POSTGRES_DB=kubsu \
-              -v /var/lib/kubsu/postgres_data:/var/lib/postgresql/data \
+              -v ~/kubsu/postgres_data:/var/lib/postgresql/data \
               postgres:15-alpine
             
             echo "Waiting for PostgreSQL to start..."
@@ -103,8 +117,8 @@ jobs:
             echo "Cleaning up old app images..."
             podman rmi ${{ env.IMAGE_NAME }}:latest || true
             
-            echo "Force pulling latest app image..."
-            podman pull --disable-compression ${{ env.IMAGE_NAME }}:latest
+            echo "Pulling latest app image..."
+            podman pull ${{ env.IMAGE_NAME }}:latest
             
             echo "Image info:"
             podman inspect ${{ env.IMAGE_NAME }}:latest --format '{{.Created}}' || echo "No image info"
@@ -139,4 +153,4 @@ jobs:
             
             echo "Deployment completed!"
             echo "Deployed app: ${{ env.IMAGE_NAME }}:${{ github.sha }}"
-            echo "PostgreSQL data: /var/lib/kubsu/postgres_data"
+            echo "PostgreSQL data: ~/kubsu/postgres_data"
