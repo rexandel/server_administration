@@ -80,7 +80,8 @@ jobs:
           port: ${{ secrets.SSH_PORT || 22 }}
           script: |
             echo "Creating postgres data directory..."
-            mkdir -p /var/lib/kubsu/postgres_data
+            sudo mkdir -p /var/lib/kubsu/postgres_data
+            sudo chown -R $(whoami):$(whoami) /var/lib/kubsu
             
             echo "Starting PostgreSQL container..."
             podman stop kubsu-postgres || true
@@ -130,10 +131,10 @@ jobs:
             echo "App container logs:"
             podman logs eich-crud --tail 20
             
-            echo "🔍 Health check:"
+            echo "Health check:"
             curl -f http://localhost:8054/health || echo "Health check failed"
             
-            echo "🔍 Root endpoint check:"
+            echo "Root endpoint check:"
             curl -f http://localhost:8054/ || echo "Root endpoint failed"
             
             echo "Deployment completed!"
